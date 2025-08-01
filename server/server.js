@@ -4,6 +4,9 @@ import { createServer } from 'http'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { v4 as uuidv4 } from 'uuid'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 import { 
   initializeDatabase, 
@@ -16,7 +19,8 @@ import {
   updateUserLastSeen,
   deleteExpiredSessions,
   getSessionStats,
-  getAllGames
+  getAllGames,
+  loadGamesFromCSV
 } from './database.js'
 
 import {
@@ -32,6 +36,8 @@ import {
 } from './redis.js'
 
 dotenv.config()
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const app = express()
 const server = createServer(app)
@@ -59,6 +65,20 @@ function generateSessionId() {
 async function initializeServices() {
   try {
     await initializeDatabase()
+    
+    // Load games from CSV if database is empty
+    try {
+      const existingGames = await getAllGames()
+      if (existingGames.length === 0) {
+        const csvPath = join(__dirname, 'games.csv')
+        const csvData = readFileSync(csvPath, 'utf-8')
+        const games = await loadGamesFromCSV(csvData, true)
+        console.log(`Loaded ${games.length} games from CSV`)
+      }
+    } catch (error) {
+      console.log('Could not load games from CSV:', error.message)
+    }
+    
     await initializeRedis()
     
     // Subscribe to Redis pub/sub for cross-instance communication
