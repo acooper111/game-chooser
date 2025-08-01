@@ -21,7 +21,7 @@ function App() {
   const wsRef = useRef(null)
 
   useEffect(() => {
-    fetch('/api/games')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/games`)
       .then(response => response.json())
       .then(gameList => {
         setGames(gameList)
