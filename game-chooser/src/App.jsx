@@ -30,7 +30,7 @@ function App() {
   }, [])
 
   const connectWebSocket = () => {
-    const ws = new WebSocket('ws://localhost:3001')
+    const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3001')
     wsRef.current = ws
 
     ws.onopen = () => {
